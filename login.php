@@ -28,7 +28,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -36,6 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <title>Login</title>
     <style>
         body {
@@ -82,6 +82,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border-radius: 5px;
             font-size: 16px;
             width: 100%;
+            position: relative;
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 40%; /* Adjusted to move the icon slightly up */
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #888;
         }
 
         button {
@@ -126,12 +140,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <?php endif; ?>
         <form action="login.php" method="POST">
             <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-           
+            <div class="password-container">
+                <input type="password" id="password" name="password" placeholder="Password" required>
+                <i class="fas fa-eye toggle-password" id="togglePassword"></i>
+            </div>
             <button type="submit">Login</button>
-            <p style="text-align: center;">belum punya akun?<a href="register.php">register disini</a></p>
+            <p style="text-align: center;">belum punya akun? <a href="register.php">register disini</a></p>
         </form>
     </div>
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            togglePassword.classList.toggle('fa-eye-slash');
+        });
+    </script>
 </body>
 
 </html>

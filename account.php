@@ -2,28 +2,64 @@
 session_start();
 include 'config.php';
 
-// Jika pengguna belum login, arahkan ke halaman login
+// Pastikan user sudah login
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
+    header("Location: login.php");
+    exit();
 }
 
-// Ambil data film
-$stmt = $pdo->query("SELECT * FROM film");
-$films = $stmt->fetchAll();
+// Ambil data user dari database berdasarkan user_id
+$user_id = $_SESSION['user_id'];
+$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch();
 
-// Mengambil data keranjang dari sesi
-$cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
+// Jika user tidak ditemukan
+if (!$user) {
+    echo "User tidak ditemukan.";
+    exit();
+}
+
+// Update data pengguna jika form dikirimkan
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $username = $_POST['username'];
+    $email = $_POST['email'];
+    $new_password = $_POST['new_password'];
+    $confirm_password = $_POST['confirm_password'];
+
+    // Validasi password baru
+    if (!empty($new_password) && $new_password !== $confirm_password) {
+        $error_message = "Password baru dan konfirmasi password tidak cocok.";
+    } else {
+        // Update data pengguna
+        $update_query = "UPDATE users SET username = ?, email = ?";
+        $params = [$username, $email];
+
+        // Hanya update password jika ada input
+        if (!empty($new_password)) {
+            $update_query .= ", password = ?";
+            $params[] = password_hash($new_password, PASSWORD_DEFAULT);
+        }
+        $update_query .= " WHERE id = ?";
+        $params[] = $user_id;
+
+        $stmt = $pdo->prepare($update_query);
+        $stmt->execute($params);
+
+        header("Location: account.php"); // Redirect setelah update
+        exit();
+    }
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Film - Bioskop Ramayani</title>
+    <title>Profil User</title>
     <style>
-        /* Reset some default styles */
         body,
         table,
         th,
@@ -41,6 +77,7 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
             margin: 0;
             padding: 20px;
         }
+
         .container {
             background-color: white;
             padding: 40px;
@@ -49,6 +86,7 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
             max-width: 800px;
             margin: auto;
         }
+
         .navbar .logo {
             font-size: 1.5rem;
             font-weight: bold;
@@ -156,10 +194,33 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
             z-index: 1000;
         }
 
+        .info {
+            margin-bottom: 15px;
+        }
+
         #cartPopup .close {
             cursor: pointer;
             color: red;
             float: right;
+        }
+
+        .form-group {
+            margin-top: 20px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .error {
+            color: red;
+            margin-top: 10px;
         }
 
         @media (max-width: 768px) {
@@ -181,96 +242,56 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
             }
         }
     </style>
-    <script>
-        function addToCart(event, form) {
-            event.preventDefault();
-            const formData = new FormData(form);
-
-            fetch('add_to_cart.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Terjadi kesalahan. Silakan coba lagi.');
-                });
-        }
-
-        function toggleCart() {
-            const cartPopup = document.getElementById('cartPopup');
-            cartPopup.style.display = cartPopup.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function closeCart() {
-            document.getElementById('cartPopup').style.display = 'none';
-        }
-    </script>
 </head>
 
 <body>
-<div class="container">
-    <!-- Navbar -->
-    <div class="navbar">
-        <div class="logo">Bioskop Ramayani</div>
-        <div class="menu">
-            <a href="index.php">Home</a>
-            <a href="user.php">Film</a>
-            <a href="cart.php">Keranjang</a>
-            <a href="account.php">Profil</a>
-            <button class="btn" onclick="window.location.href='logout.php'">Logout</button>
+
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">Bioskop Ramayani</div>
+            <div class="menu">
+                <a href="index.php">Home</a>
+                <a href="user.php">Film</a>
+                <a href="cart.php">Keranjang</a>
+                <a href="account.php">Profil</a>
+                <button class="btn" onclick="window.location.href='logout.php'">Logout</button>
+            </div>
         </div>
-    </div>
+        <h2 align="center">Profil Pengguna</h2>
 
-    <h1 align="center">Daftar Film</h1>
+        <form method="POST">
+            <div class="info">
+                <strong>Username:</strong>
+                <input type="text" name="username" value="<?php echo htmlspecialchars($user['username']); ?>" required>
+            </div>
 
+            <div class="info">
+                <strong>Email:</strong>
+                <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+            </div>
 
+            <div class="info">
+                <strong>Role:</strong> <?php echo $user['role_id'] == 1 ? 'Admin' : 'User'; ?>
+            </div>
 
-    <!-- Popup Keranjang -->
-    <div id="cartPopup">
-        <span class="close" onclick="closeCart()">✖</span>
-        <h2>Isi Keranjang</h2>
-        <?php if (empty($cart)): ?>
-            <p>Keranjang Anda kosong.</p>
-        <?php else: ?>
-            <ul>
-                <?php foreach ($cart as $item): ?>
-                    <li><?php echo $item['judul_film']; ?> - Jumlah: <?php echo $item['jumlah']; ?></li>
-                <?php endforeach; ?>
-            </ul>
+            <div class="info">
+                <strong>Password:</strong>
+                <input type="password" name="new_password" placeholder="Masukkan password baru (opsional)">
+            </div>
+
+            <div class="info">
+                <strong>Konfirmasi Password:</strong>
+                <input type="password" name="confirm_password" placeholder="Konfirmasi password baru (opsional)">
+            </div>
+
+            <button type="submit" class="btn">Simpan Perubahan</button>
+        </form>
+
+        <?php if (isset($error_message)): ?>
+            <div class="error"><?php echo $error_message; ?></div>
         <?php endif; ?>
     </div>
 
-    <table>
-        <tr>
-            <th>Judul Film</th>
-            <th>Genre</th>
-            <th>Harga</th>
-            <th>Stok</th>
-            <th>Gambar</th>
-            <th>Aksi</th>
-        </tr>
-        <?php foreach ($films as $film): ?>
-            <tr>
-                <td><?php echo $film['judul_film']; ?></td>
-                <td><?php echo $film['genre']; ?></td>
-                <td>Rp<?php echo number_format($film['harga'], 2, ',', '.'); ?></td>
-                <td><?php echo $film['stok']; ?></td>
-                <td><img src="images/<?php echo $film['gambar']; ?>" alt="<?php echo $film['judul_film']; ?>"></td>
-                <td>
-                    <form onsubmit="addToCart(event, this)">
-                        <input type="hidden" name="film_id" value="<?php echo $film['id']; ?>">
-                        <input type="number" name="jumlah" value="1" min="1" style="width: 50px;">
-                        <button type="submit">Tambah ke Keranjang</button>
-                    </form>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-    </table>
-        </div>
 </body>
 
 </html>

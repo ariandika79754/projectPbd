@@ -2,30 +2,15 @@
 session_start();
 include 'config.php';
 
-// Cek apakah pengguna sudah login
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
+// Pastikan user sudah login dan memiliki role sebagai admin
+if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
+    header("Location: login.php");
+    exit();
 }
 
-// Ambil data keranjang pengguna berdasarkan user_id dari session
-$user_id = $_SESSION['user_id'];
-
-$stmt = $pdo->prepare("
-    SELECT users.username, film.judul_film, film.harga, keranjang.jumlah
-    FROM keranjang
-    JOIN users ON keranjang.user_id = users.id
-    JOIN film ON keranjang.film_id = film.id
-    WHERE keranjang.user_id = ?
-");
-$stmt->execute([$user_id]);
-$cartItems = $stmt->fetchAll();
-
-// Hitung total harga
-$totalHarga = 0;
-foreach ($cartItems as $item) {
-    $totalHarga += $item['harga'] * $item['jumlah'];
-}
+// Ambil data semua user dari database
+$stmt = $pdo->query("SELECT * FROM users WHERE role_id = 2");
+$users = $stmt->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -34,7 +19,7 @@ foreach ($cartItems as $item) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keranjang - Bioskop Ramayani</title>
+    <title>Daftar Pengguna</title>
     <style>
         body,
         table,
@@ -61,6 +46,14 @@ foreach ($cartItems as $item) {
             box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
             max-width: 800px;
             margin: auto;
+        }
+
+        .navbar .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            margin-left: 30px;
+            padding-left: 20px;
         }
 
         .navbar {
@@ -98,79 +91,108 @@ foreach ($cartItems as $item) {
             background-color: #58c0a5;
         }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
         }
 
         th,
         td {
-            padding: 12px;
-            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
         }
 
         th {
+            background-color: #f2f2f2;
+           
+        }
+
+        .btn-action {
             background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-action:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
             color: white;
         }
 
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
+        .btn-delete:hover {
+            background-color: #c82333;
         }
     </style>
+    <script>
+        function confirmDelete(userId) {
+            if (confirm('Apakah Anda yakin ingin menghapus user ini?')) {
+                window.location.href = 'delete_user.php?id=' + userId;
+            }
+        }
+    </script>
 </head>
 
 <body>
+
     <div class="container">
         <div class="navbar">
             <div class="logo">Bioskop Ramayani</div>
             <div class="menu">
                 <a href="index.php">Home</a>
-                <a href="user.php">Film</a>
-                <a href="cart.php">Keranjang</a>
-                <a href="account.php">Profil</a>
+                <a href="admin.php">Admin Panel</a>
+                <a href="cart_admin.php">Keranjang</a>
+                <a href="user_list.php">User</a>
                 <button class="btn" onclick="window.location.href='logout.php'">Logout</button>
             </div>
         </div>
 
-        <h1>Keranjang Anda</h1>
-        <?php if (empty($cartItems)): ?>
-            <p>Keranjang Anda kosong.</p>
-        <?php else: ?>
+        <h2>Daftar Pengguna</h2>
+
+        <?php if (!empty($users)): ?>
             <table>
                 <thead>
                     <tr>
+                        <th>ID</th>
                         <th>Username</th>
-                        <th>Judul Film</th>
-                        <th>Jumlah Tiket</th>
-                        <th>Harga (per tiket)</th>
-                        <th>Total Harga</th>
+                        <th>Email</th>
+                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($cartItems as $item): ?>
+                    <?php foreach ($users as $user): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($item['username']); ?></td>
-                            <td><?php echo htmlspecialchars($item['judul_film']); ?></td>
-                            <td><?php echo htmlspecialchars($item['jumlah']); ?></td>
-                            <td>Rp<?php echo number_format($item['harga'], 2, ',', '.'); ?></td>
-                            <td>Rp<?php echo number_format($item['harga'] * $item['jumlah'], 2, ',', '.'); ?></td>
+                            <td><?php echo htmlspecialchars($user['id']); ?></td>
+                            <td><?php echo htmlspecialchars($user['username']); ?></td>
+                            <td><?php echo htmlspecialchars($user['email']); ?></td>
+                            <td>
+                                <button class="btn-action" onclick="window.location.href='view_user.php?id=<?php echo $user['id']; ?>'">Lihat</button>
+                                <button class="btn-action" onclick="window.location.href='edit_user.php?id=<?php echo $user['id']; ?>'">Edit</button>
+                                <button class="btn-action btn-delete" onclick="confirmDelete(<?php echo $user['id']; ?>)">Hapus</button>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
-            <h3>Total Keseluruhan: Rp<?php echo number_format($totalHarga, 2, ',', '.'); ?></h3>
+        <?php else: ?>
+            <p>Tidak ada pengguna yang ditemukan.</p>
         <?php endif; ?>
     </div>
+
 </body>
 
 </html>

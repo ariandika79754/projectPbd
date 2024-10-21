@@ -55,6 +55,7 @@ $films = $stmt->fetchAll();
             padding-left: 20px;
             /* Atau gunakan padding */
         }
+
         .alert {
             padding: 15px;
             background-color: #4CAF50;
@@ -67,6 +68,7 @@ $films = $stmt->fetchAll();
         .alert.error {
             background-color: #f44336;
         }
+
         .navbar {
             background-color: #A45EE9;
             color: white;
@@ -182,11 +184,13 @@ $films = $stmt->fetchAll();
                     <?php if ($_SESSION['role_id'] == 1): // Admin 
                     ?> <a href="#">Home</a>
                         <a href="admin.php">Admin Panel</a>
-                        <a href="manage_films.php">Kelola Film</a>
+                        <a href="cart_admin.php">Keranjang</a>
+                        <a href="user_list.php">User</a>
                     <?php elseif ($_SESSION['role_id'] == 2): // User 
-                    ?> <a href="#">Home</a>
+                    ?> <a href="index.php">Home</a>
                         <a href="user.php">Film</a>
                         <a href="cart.php">Keranjang</a>
+                        <a href="account.php">Profil</a>
                     <?php endif; ?>
                     <button class="btn" onclick="window.location.href='logout.php'">Logout</button>
                 <?php else: ?>

@@ -15,10 +15,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $film_id = $_POST['film_id'];
         $stmt = $pdo->prepare("DELETE FROM film WHERE id = ?");
         $stmt->execute([$film_id]);
-        
+
         // Simpan flash message di session
         $_SESSION['flash_message'] = "Film berhasil dihapus.";
-        
+
         // Redirect agar flash message bisa ditampilkan
         header('Location: admin.php');
         exit;
@@ -50,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             max-width: 800px;
             margin: auto;
         }
-        
+
         .navbar .logo {
             font-size: 1.5rem;
             font-weight: bold;
@@ -108,7 +108,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             margin-top: 20px;
         }
 
-        th, td {
+        th,
+        td {
             padding: 12px;
             border: 1px solid #ccc;
             text-align: left;
@@ -155,14 +156,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="menu">
                 <a href="index.php">Home</a>
                 <a href="admin.php">Admin Panel</a>
-                <a href="manage_films.php">Kelola Film</a>
+                <a href="cart_admin.php">Keranjang</a>
+                <a href="user_list.php">User</a>
                 <button class="btn" onclick="window.location.href='logout.php'">Logout</button>
             </div>
         </div>
 
         <?php if (isset($_SESSION['flash_message'])): ?>
             <div class="alert">
-                <?php echo $_SESSION['flash_message']; unset($_SESSION['flash_message']); ?>
+                <?php echo $_SESSION['flash_message'];
+                unset($_SESSION['flash_message']); ?>
             </div>
         <?php endif; ?>
 
