@@ -15,34 +15,90 @@ $films = $stmt->fetchAll();
 // Mengambil data keranjang dari sesi
 $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
 ?>
-
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/styles.css">
-    <title>Daftar Film</title>
+    <title>Daftar Film - Bioskop Ramayani</title>
     <style>
-        body {
+        /* Reset some default styles */
+        body,
+        table,
+        th,
+        td,
+        input,
+        button {
+            margin: 0;
+            padding: 0;
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #74ebd5, #ACB6E5);
             margin: 0;
             padding: 20px;
         }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            margin: auto;
+        }
+        .navbar .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            margin-left: 30px;
+            /* Beri jarak dari tepi kiri */
+            padding-left: 20px;
+            /* Atau gunakan padding */
+        }
 
-        h1 {
-            text-align: center;
-            color: #333;
+        .navbar {
+            background-color: #A45EE9;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        .navbar a:hover {
+            background-color: #444;
+        }
+
+        .navbar .btn {
+            background-color: #74ebd5;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .navbar .btn:hover {
+            background-color: #58c0a5;
         }
 
         table {
-            width: 100%;
+            width: 80%;
             border-collapse: collapse;
-            margin-top: 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
         }
 
         th,
@@ -66,7 +122,7 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
         }
 
         img {
-            width: 100px;
+            max-width: 80px;
             height: auto;
         }
 
@@ -74,7 +130,7 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
             background-color: #28a745;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s ease;
@@ -84,38 +140,20 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
             background-color: #218838;
         }
 
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-
-        a:hover {
-            background-color: #0056b3;
-        }
-
         #cartPopup {
             display: none;
             position: fixed;
-            top: 20%;
-            right: 5%;
-            width: 300px;
-            max-height: 400px;
-            overflow-y: auto;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background-color: white;
             border: 1px solid #ccc;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
             z-index: 1000;
-            padding: 10px;
-        }
-
-        #cartPopup h2 {
-            margin-top: 0;
         }
 
         #cartPopup .close {
@@ -123,11 +161,29 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
             color: red;
             float: right;
         }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 10px;
+            }
+
+            .navbar a {
+                padding: 8px 12px;
+            }
+
+            table {
+                font-size: 14px;
+                width: 100%;
+            }
+
+            img {
+                max-width: 60px;
+            }
+        }
     </style>
     <script>
         function addToCart(event, form) {
-            event.preventDefault(); // Mencegah form dikirim secara default
-
+            event.preventDefault();
             const formData = new FormData(form);
 
             fetch('add_to_cart.php', {
@@ -136,7 +192,6 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Tampilkan pesan berdasarkan respons
                     alert(data.message);
                 })
                 .catch(error => {
@@ -157,14 +212,21 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
 </head>
 
 <body>
-    <h1>Daftar Film</h1>
-
-    <!-- Icon Keranjang -->
-    <div style="text-align: right; margin-bottom: 20px;">
-        <span onclick="toggleCart()" style="cursor: pointer;">
-            🛒 Keranjang (<?php echo count($cart); ?>)
-        </span>
+<div class="container">
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="logo">Bioskop Ramayani</div>
+        <div class="menu">
+            <a href="index.php">Home</a>
+            <a href="user.php">Film</a>
+            <a href="cart.php">Keranjang</a>
+            <button class="btn" onclick="window.location.href='logout.php'">Logout</button>
+        </div>
     </div>
+
+    <h1 align="center">Daftar Film</h1>
+
+
 
     <!-- Popup Keranjang -->
     <div id="cartPopup">
@@ -207,8 +269,7 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
             </tr>
         <?php endforeach; ?>
     </table>
-
-    <a href="index.php">Kembali ke Beranda</a>
+        </div>
 </body>
 
 </html>

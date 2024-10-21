@@ -127,7 +127,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <form action="login.php" method="POST">
             <input type="text" name="username" placeholder="Username" required>
             <input type="password" name="password" placeholder="Password" required>
+           
             <button type="submit">Login</button>
+            <p style="text-align: center;">belum punya akun?<a href="register.php">register disini</a></p>
         </form>
     </div>
 </body>

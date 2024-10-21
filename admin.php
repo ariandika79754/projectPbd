@@ -43,7 +43,50 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             max-width: 800px;
             margin: auto;
         }
+        .navbar .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            margin-left: 30px;
+            /* Beri jarak dari tepi kiri */
+            padding-left: 20px;
+            /* Atau gunakan padding */
+        }
 
+        .navbar {
+            background-color: #A45EE9;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        .navbar a:hover {
+            background-color: #444;
+        }
+
+        .navbar .btn {
+            background-color: #74ebd5;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .navbar .btn:hover {
+            background-color: #58c0a5;
+        }
         h1 {
             text-align: center;
             color: #333;
@@ -88,6 +131,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <body>
     <div class="container">
+    <div class="navbar">
+        <div class="logo">Bioskop Ramayani</div>
+        <div class="menu">
+            <a href="index.php">Home</a>
+            <a href="admin.php">Admin Panel</a>
+            <a href="manage_films.php">Kelola Film</a>
+            <button class="btn" onclick="window.location.href='logout.php'">Logout</button>
+        </div>
+    </div>
         <h1>Admin Panel</h1>
         <h2><a href="add_film.php">Tambah Film</a></h2>
 

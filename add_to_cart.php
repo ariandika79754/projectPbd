@@ -2,36 +2,45 @@
 session_start();
 include 'config.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $film_id = $_POST['film_id'] ?? null;
-    $jumlah = $_POST['jumlah'] ?? 1;
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
 
-    // Ambil film dari database
-    $stmt = $pdo->prepare("SELECT * FROM film WHERE id = ?");
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $user_id = $_SESSION['user_id'];
+    $film_id = $_POST['film_id'];
+    $jumlah = $_POST['jumlah'];
+
+    // Cek apakah film sudah ada di keranjang
+    $stmt = $pdo->prepare("SELECT * FROM keranjang WHERE user_id = ? AND film_id = ?");
+    $stmt->execute([$user_id, $film_id]);
+    $existingCart = $stmt->fetch();
+
+    // Ambil stok film yang ada
+    $stmt = $pdo->prepare("SELECT stok FROM film WHERE id = ?");
     $stmt->execute([$film_id]);
     $film = $stmt->fetch();
 
-    if ($film && $film['stok'] > 0) {
-        // Tambah ke keranjang
-        $stmt = $pdo->prepare("INSERT INTO keranjang (film_id, jumlah) VALUES (?, ?)");
-        $stmt->execute([$film_id, $jumlah]);
+    // Cek apakah ada cukup stok
+    if ($film && $film['stok'] >= $jumlah) {
+        if ($existingCart) {
+            // Jika sudah ada, update jumlah
+            $stmt = $pdo->prepare("UPDATE keranjang SET jumlah = jumlah + ? WHERE user_id = ? AND film_id = ?");
+            $stmt->execute([$jumlah, $user_id, $film_id]);
+        } else {
+            // Jika belum ada, tambahkan item baru
+            $stmt = $pdo->prepare("INSERT INTO keranjang (user_id, film_id, jumlah) VALUES (?, ?, ?)");
+            $stmt->execute([$user_id, $film_id, $jumlah]);
+        }
 
-        // Kurangi stok
+        // Kurangi stok film
         $new_stok = $film['stok'] - $jumlah;
         $stmt = $pdo->prepare("UPDATE film SET stok = ? WHERE id = ?");
         $stmt->execute([$new_stok, $film_id]);
 
-        echo json_encode([
-            'success' => true,
-            'message' => "Film '{$film['judul_film']}' berhasil ditambahkan ke keranjang."
-        ]);
+        echo json_encode(['message' => 'Film berhasil ditambahkan ke keranjang!']);
     } else {
-        echo json_encode([
-            'success' => false,
-            'message' => "Stok film '{$film['judul_film']}' tidak tersedia."
-        ]);
+        echo json_encode(['message' => 'Stok tidak cukup!']);
     }
-
-    exit; // Akhiri eksekusi setelah mengirim respons
 }
-?>
