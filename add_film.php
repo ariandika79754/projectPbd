@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $judul_film = trim($_POST['judul_film']);
-    $genre = trim($_POST['genre']);
+    $genre = $_POST['genre'];
     $harga = $_POST['harga'];
     $stok = $_POST['stok'];
 
@@ -46,10 +46,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         // Jika semuanya ok, unggah file ke server
         if (move_uploaded_file($_FILES['gambar']['tmp_name'], $target_file)) {
-            // Simpan hanya nama file gambar di database
             $stmt = $pdo->prepare("INSERT INTO film (judul_film, genre, harga, stok, gambar) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$judul_film, $genre, $harga, $stok, $gambar]); // Simpan hanya nama file
-            header('Location: admin.php'); // Redirect ke halaman admin setelah menambah film
+            $stmt->execute([$judul_film, $genre, $harga, $stok, $gambar]);
+            header('Location: admin.php');
             exit;
         } else {
             echo "Maaf, ada kesalahan saat mengunggah file.";
@@ -95,7 +94,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         input[type="text"],
         input[type="number"],
-        input[type="file"] {
+        input[type="file"],
+        select {
             padding: 10px;
             margin-bottom: 10px;
             border: 1px solid #ccc;
@@ -124,7 +124,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h1>Tambah Film</h1>
         <form action="add_film.php" method="POST" enctype="multipart/form-data">
             <input type="text" name="judul_film" placeholder="Judul Film" required>
-            <input type="text" name="genre" placeholder="Genre" required>
+            <select name="genre" required>
+                <option value="">Pilih Genre</option>
+                <option value="Action">Action</option>
+                <option value="Comedy">Comedy</option>
+                <option value="Drama">Drama</option>
+                <option value="Horror">Horror</option>
+                <option value="Romance">Romance</option>
+                <option value="Thriller">Thriller</option>
+                <!-- Add more genres as needed -->
+            </select>
             <input type="number" name="harga" placeholder="Harga" required>
             <input type="number" name="stok" placeholder="Stok" required>
             <input type="file" name="gambar" accept="image/*" required>

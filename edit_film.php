@@ -85,7 +85,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         input[type="text"],
-        input[type="number"] {
+        input[type="number"],
+        select {
             width: calc(100% - 20px);
             padding: 10px;
             margin: 10px 0;
@@ -130,7 +131,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <form action="edit_film.php?film_id=<?php echo $film['id']; ?>" method="POST" enctype="multipart/form-data">
         <h1>Edit Film</h1>
         <input type="text" name="judul_film" value="<?php echo $film['judul_film']; ?>" required placeholder="Judul Film">
-        <input type="text" name="genre" value="<?php echo $film['genre']; ?>" required placeholder="Genre">
+        
+        <!-- Ubah input teks genre menjadi select -->
+        <select name="genre" required>
+            <option value="">Pilih Genre</option>
+            <option value="Action" <?php echo $film['genre'] == 'Action' ? 'selected' : ''; ?>>Action</option>
+            <option value="Comedy" <?php echo $film['genre'] == 'Comedy' ? 'selected' : ''; ?>>Comedy</option>
+            <option value="Drama" <?php echo $film['genre'] == 'Drama' ? 'selected' : ''; ?>>Drama</option>
+            <option value="Horror" <?php echo $film['genre'] == 'Horror' ? 'selected' : ''; ?>>Horror</option>
+            <option value="Romance" <?php echo $film['genre'] == 'Romance' ? 'selected' : ''; ?>>Romance</option>
+            <option value="Thriller" <?php echo $film['genre'] == 'Thriller' ? 'selected' : ''; ?>>Thriller</option>
+        </select>
+        
         <input type="number" name="harga" value="<?php echo $film['harga']; ?>" required placeholder="Harga">
         <input type="number" name="stok" value="<?php echo $film['stok']; ?>" required placeholder="Stok">
         <img src="images/<?php echo $film['gambar']; ?>" accept="image/*" alt="Current Image" class="image-preview">
