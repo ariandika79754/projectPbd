@@ -8,8 +8,17 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
     exit();
 }
 
-// Ambil data semua user dari database
-$stmt = $pdo->query("SELECT * FROM users WHERE role_id = 2");
+// Cek apakah ada input pencarian
+$search = '';
+if (isset($_POST['search'])) {
+    $search = $_POST['search'];
+    $stmt = $pdo->prepare("SELECT users.*, role.role AS role FROM users JOIN role ON users.role_id = role.id WHERE username LIKE :search OR email LIKE :search");
+    $stmt->execute(['search' => '%' . $search . '%']);
+} else {
+    // Ambil data semua user dari database
+    $stmt = $pdo->query("SELECT users.*, role.role AS role FROM users JOIN role ON users.role_id = role.id");
+}
+
 $users = $stmt->fetchAll();
 ?>
 
@@ -111,7 +120,6 @@ $users = $stmt->fetchAll();
 
         th {
             background-color: #f2f2f2;
-           
         }
 
         .btn-action {
@@ -163,6 +171,12 @@ $users = $stmt->fetchAll();
 
         <h2>Daftar Pengguna</h2>
 
+        <!-- Form Pencarian -->
+        <form method="POST" action="">
+            <input type="text" name="search" placeholder="Cari pengguna..." value="<?php echo htmlspecialchars($search); ?>" style="padding: 10px; width: 300px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
+            <input type="submit" value="Cari" class="btn-action">
+        </form>
+
         <?php if (!empty($users)): ?>
             <table>
                 <thead>
@@ -170,6 +184,7 @@ $users = $stmt->fetchAll();
                         <th>ID</th>
                         <th>Username</th>
                         <th>Email</th>
+                        <th>Role</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -179,6 +194,7 @@ $users = $stmt->fetchAll();
                             <td><?php echo htmlspecialchars($user['id']); ?></td>
                             <td><?php echo htmlspecialchars($user['username']); ?></td>
                             <td><?php echo htmlspecialchars($user['email']); ?></td>
+                            <td><?php echo htmlspecialchars($user['role']); ?></td>
                             <td>
                                 <button class="btn-action" onclick="window.location.href='view_user.php?id=<?php echo $user['id']; ?>'">Lihat</button>
                                 <button class="btn-action" onclick="window.location.href='edit_user.php?id=<?php echo $user['id']; ?>'">Edit</button>

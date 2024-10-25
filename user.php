@@ -7,9 +7,17 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
-
-// Ambil data film
-$stmt = $pdo->query("SELECT * FROM film");
+// Ambil kata kunci pencarian jika ada
+$search_keyword = '';
+if (isset($_POST['search'])) {
+    $search_keyword = $_POST['search_keyword'];
+    // Siapkan query untuk pencarian
+    $stmt = $pdo->prepare("SELECT * FROM film WHERE judul_film LIKE ? OR genre LIKE ?");
+    $stmt->execute(["%$search_keyword%", "%$search_keyword%"]);
+} else {
+    // Ambil semua film jika tidak ada pencarian
+    $stmt = $pdo->query("SELECT * FROM film");
+}
 $films = $stmt->fetchAll();
 
 // Mengambil data keranjang dari sesi
@@ -41,6 +49,7 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
             margin: 0;
             padding: 20px;
         }
+
         .container {
             background-color: white;
             padding: 40px;
@@ -49,6 +58,7 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
             max-width: 800px;
             margin: auto;
         }
+
         .navbar .logo {
             font-size: 1.5rem;
             font-weight: bold;
@@ -212,65 +222,69 @@ $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
 </head>
 
 <body>
-<div class="container">
-    <!-- Navbar -->
-    <div class="navbar">
-        <div class="logo">Bioskop Ramayani</div>
-        <div class="menu">
-            <a href="index.php">Home</a>
-            <a href="user.php">Film</a>
-            <a href="cart.php">Keranjang</a>
-            <a href="account.php">Profil</a>
-            <button class="btn" onclick="window.location.href='logout.php'">Logout</button>
+    <div class="container">
+        <!-- Navbar -->
+        <div class="navbar">
+            <div class="logo">Bioskop Ramayani</div>
+            <div class="menu">
+                <a href="index.php">Home</a>
+                <a href="user.php">Film</a>
+                <a href="cart.php">Keranjang</a>
+                <a href="account.php">Profil</a>
+                <button class="btn" onclick="window.location.href='logout.php'">Logout</button>
+            </div>
         </div>
-    </div>
 
-    <h1 align="center">Daftar Film</h1>
-
+        <h1>Daftar Film</h1>
 
 
-    <!-- Popup Keranjang -->
-    <div id="cartPopup">
-        <span class="close" onclick="closeCart()">✖</span>
-        <h2>Isi Keranjang</h2>
-        <?php if (empty($cart)): ?>
-            <p>Keranjang Anda kosong.</p>
-        <?php else: ?>
-            <ul>
-                <?php foreach ($cart as $item): ?>
-                    <li><?php echo $item['judul_film']; ?> - Jumlah: <?php echo $item['jumlah']; ?></li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-    </div>
+        <form method="POST" action="" style="margin-bottom: 20px;">
+            <input type="text" name="search_keyword" value="<?php echo htmlspecialchars($search_keyword); ?>" placeholder="Cari film atau genre..." required style="padding: 10px; width: 300px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
+            <button type="submit" name="search">Cari</button>
+        </form>
 
-    <table>
-        <tr>
-            <th>Judul Film</th>
-            <th>Genre</th>
-            <th>Harga</th>
-            <th>Stok</th>
-            <th>Gambar</th>
-            <th>Aksi</th>
-        </tr>
-        <?php foreach ($films as $film): ?>
+        <!-- Popup Keranjang -->
+        <div id="cartPopup">
+            <span class="close" onclick="closeCart()">✖</span>
+            <h2>Isi Keranjang</h2>
+            <?php if (empty($cart)): ?>
+                <p>Keranjang Anda kosong.</p>
+            <?php else: ?>
+                <ul>
+                    <?php foreach ($cart as $item): ?>
+                        <li><?php echo $item['judul_film']; ?> - Jumlah: <?php echo $item['jumlah']; ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </div>
+
+        <table>
             <tr>
-                <td><?php echo $film['judul_film']; ?></td>
-                <td><?php echo $film['genre']; ?></td>
-                <td>Rp<?php echo number_format($film['harga'], 2, ',', '.'); ?></td>
-                <td><?php echo $film['stok']; ?></td>
-                <td><img src="images/<?php echo $film['gambar']; ?>" alt="<?php echo $film['judul_film']; ?>"></td>
-                <td>
-                    <form onsubmit="addToCart(event, this)">
-                        <input type="hidden" name="film_id" value="<?php echo $film['id']; ?>">
-                        <input type="number" name="jumlah" value="1" min="1" style="width: 50px;">
-                        <button type="submit">Tambah ke Keranjang</button>
-                    </form>
-                </td>
+                <th>Judul Film</th>
+                <th>Genre</th>
+                <th>Harga</th>
+                <th>Stok</th>
+                <th>Gambar</th>
+                <th>Aksi</th>
             </tr>
-        <?php endforeach; ?>
-    </table>
-        </div>
+            <?php foreach ($films as $film): ?>
+                <tr>
+                    <td><?php echo $film['judul_film']; ?></td>
+                    <td><?php echo $film['genre']; ?></td>
+                    <td>Rp<?php echo number_format($film['harga'], 2, ',', '.'); ?></td>
+                    <td><?php echo $film['stok']; ?></td>
+                    <td><img src="images/<?php echo $film['gambar']; ?>" alt="<?php echo $film['judul_film']; ?>"></td>
+                    <td>
+                        <form onsubmit="addToCart(event, this)">
+                            <input type="hidden" name="film_id" value="<?php echo $film['id']; ?>">
+                            <input type="number" name="jumlah" value="1" min="1" style="width: 50px;">
+                            <button type="submit">Tambah ke Keranjang</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+    </div>
 </body>
 
 </html>

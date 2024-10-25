@@ -2,30 +2,38 @@
 session_start();
 include 'config.php';
 
+// Cek session user
 if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
     header('Location: index.php');
     exit;
 }
 
-$stmt = $pdo->query("SELECT * FROM film");
+// Ambil kata kunci pencarian jika ada
+$search_keyword = '';
+if (isset($_POST['search'])) {
+    $search_keyword = $_POST['search_keyword'];
+    // Siapkan query untuk pencarian
+    $stmt = $pdo->prepare("SELECT * FROM film WHERE judul_film LIKE ? OR genre LIKE ?");
+    $stmt->execute(["%$search_keyword%", "%$search_keyword%"]);
+} else {
+    // Ambil semua film jika tidak ada pencarian
+    $stmt = $pdo->query("SELECT * FROM film");
+}
 $films = $stmt->fetchAll();
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (isset($_POST['delete'])) {
-        $film_id = $_POST['film_id'];
-        $stmt = $pdo->prepare("DELETE FROM film WHERE id = ?");
-        $stmt->execute([$film_id]);
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete'])) {
+    $film_id = $_POST['film_id'];
+    $stmt = $pdo->prepare("DELETE FROM film WHERE id = ?");
+    $stmt->execute([$film_id]);
 
-        // Simpan flash message di session
-        $_SESSION['flash_message'] = "Film berhasil dihapus.";
+    // Simpan flash message di session
+    $_SESSION['flash_message'] = "Film berhasil dihapus.";
 
-        // Redirect agar flash message bisa ditampilkan
-        header('Location: admin.php');
-        exit;
-    }
+    // Redirect agar flash message bisa ditampilkan
+    header('Location: admin.php');
+    exit;
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -120,7 +128,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         button {
-            background-color: #74ebd5;
+            background-color: #007bff;
             border: none;
             color: white;
             padding: 10px;
@@ -173,6 +181,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h2><a href="add_film.php">Tambah Film</a></h2>
 
         <h2>Daftar Film</h2>
+
+        <!-- Form Pencarian -->
+        <form method="POST" action="" style="margin-bottom: 20px;">
+            <input type="text" name="search_keyword" value="<?php echo htmlspecialchars($search_keyword); ?>" placeholder="Cari film atau genre..." required style="padding: 10px; width: 300px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
+            <button type="submit" name="search">Cari</button>
+        </form>
+
         <table>
             <tr>
                 <th>Judul</th>

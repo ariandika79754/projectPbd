@@ -11,14 +11,24 @@ if (!isset($_SESSION['user_id'])) {
 // Ambil data keranjang pengguna berdasarkan user_id dari session
 $user_id = $_SESSION['user_id'];
 
+// Initialize search query variable
+$searchQuery = '';
+
+// Check if a search has been performed
+if (isset($_GET['search'])) {
+    $searchQuery = $_GET['search'];
+}
+
+// Ambil data keranjang pengguna berdasarkan user_id dan pencarian
 $stmt = $pdo->prepare("
     SELECT users.username, film.judul_film, film.harga, keranjang.jumlah
     FROM keranjang
     JOIN users ON keranjang.user_id = users.id
     JOIN film ON keranjang.film_id = film.id
-    WHERE keranjang.user_id = ?
+    WHERE keranjang.user_id = ? AND (film.judul_film LIKE ? OR users.username LIKE ?)
 ");
-$stmt->execute([$user_id]);
+$searchWildcard = "%$searchQuery%"; // Use wildcards for searching
+$stmt->execute([$user_id, $searchWildcard, $searchWildcard]);
 $cartItems = $stmt->fetchAll();
 
 // Hitung total harga
@@ -27,6 +37,7 @@ foreach ($cartItems as $item) {
     $totalHarga += $item['harga'] * $item['jumlah'];
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -61,6 +72,24 @@ foreach ($cartItems as $item) {
             box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
             max-width: 800px;
             margin: auto;
+        }
+
+        /* Gaya untuk tombol pencarian */
+        .search-btn {
+            background-color: #007BFF;
+            /* Biru */
+            color: white;
+            /* Warna teks putih */
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background-color: #0056b3;
+            /* Biru gelap saat hover */
         }
 
         .navbar {
@@ -143,6 +172,11 @@ foreach ($cartItems as $item) {
         </div>
 
         <h1>Keranjang Anda</h1>
+        <!-- Form Pencarian -->
+        <form method="GET" action="" style="margin-bottom: 20px;">
+            <input type="text" name="search" value="<?php echo htmlspecialchars($searchQuery); ?>" placeholder="Cari film atau pengguna..." required style="padding: 10px; width: 300px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
+            <button type="submit" class="search-btn">Cari</button>
+        </form>
         <?php if (empty($cartItems)): ?>
             <p>Keranjang Anda kosong.</p>
         <?php else: ?>

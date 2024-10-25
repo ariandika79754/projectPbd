@@ -8,14 +8,21 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
     exit;
 }
 
-// Ambil semua data keranjang
+// Inisialisasi variabel pencarian
+$searchQuery = '';
+if (isset($_GET['search'])) {
+    $searchQuery = $_GET['search'];
+}
+
+// Ambil semua data keranjang dengan filter pencarian
 $stmt = $pdo->prepare("
     SELECT keranjang.id AS cart_id, users.username, film.judul_film, film.harga, keranjang.jumlah
     FROM keranjang
     JOIN users ON keranjang.user_id = users.id
     JOIN film ON keranjang.film_id = film.id
+    WHERE film.judul_film LIKE ? OR users.username LIKE ?
 ");
-$stmt->execute();
+$stmt->execute(['%' . $searchQuery . '%', '%' . $searchQuery . '%']);
 $cartItems = $stmt->fetchAll();
 
 // Hitung total harga
@@ -58,6 +65,7 @@ foreach ($cartItems as $item) {
             max-width: 800px;
             margin: auto;
         }
+
         .navbar .logo {
             font-size: 1.5rem;
             font-weight: bold;
@@ -91,6 +99,24 @@ foreach ($cartItems as $item) {
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s ease;
+        }
+
+        /* Gaya untuk tombol pencarian */
+        .search-btn {
+            background-color: #007BFF;
+            /* Biru */
+            color: white;
+            /* Warna teks putih */
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background-color: #0056b3;
+            /* Biru gelap saat hover */
         }
 
         table {
@@ -129,6 +155,13 @@ foreach ($cartItems as $item) {
         </div>
 
         <h1>Keranjang Admin</h1>
+
+        <!-- Form Pencarian -->
+        <form method="GET" action="" style="margin-bottom: 20px;">
+            <input type="text" name="search" value="<?php echo htmlspecialchars($searchQuery); ?>" placeholder="Cari film atau pengguna..." required style="padding: 10px; width: 300px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
+            <button type="submit" class="search-btn">Cari</button>
+        </form>
+
         <?php if (empty($cartItems)): ?>
             <p>Keranjang kosong.</p>
         <?php else: ?>
